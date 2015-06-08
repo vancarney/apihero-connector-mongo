@@ -1,2 +1,2 @@
-# apihero-connector-mongo
+# loopback-connector-apihero-mongodb
 Mongo Connector for API Hero
