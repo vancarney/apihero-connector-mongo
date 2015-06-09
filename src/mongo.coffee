@@ -4,7 +4,7 @@ MongoConnector = require 'loopback-connector-mongodb'
 
 class MongoDB
   'use strict'
-  exclude:[/^_+.*$/, /^indexes+$/, /^migrations+$/]
+  exclude:['_+.*', 'system\.indexes+', 'migrations+']
   constructor:(@dataSource, @db)->
   getCollection:(name,callback)->
     @db.collections.apply @, arguments
