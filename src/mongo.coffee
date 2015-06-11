@@ -1,20 +1,27 @@
 {_}            = require 'lodash'
 Serializable   = require './serializable'
 MongoConnector = require 'loopback-connector-mongodb'
-
 class MongoDB
   'use strict'
   exclude:['_+.*', 'system\.indexes+', 'migrations+']
   constructor:(@dataSource, @db)->
   getCollection:(name,callback)->
     @db.collection name, callback
-  renameCollection:(name, newName, opts,callback)->
+  renameCollection:(name, newName, opts, callback)->
+    throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
+    if typeof opts is 'function'
+      callback = arguments[2]
+      opts = {}
+    callback 'new name is required at arguments[1]' unless typeof newName is 'string' and newName.length
     @getCollection name, (e,col)=>
-      col.rename newName, opts, callback    
+      col.rename newName, opts, callback
   dropCollection:(name,callback)->
+    throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
+    return callback 'name required' unless name? and typeof name is 'string'
     @getCollection name, (e,col)=>
       col.drop callback
   discoverCollections:(callback)->
+    throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
     trees = {}
     @db.collections (e,cols)=>
       done = _.after cols.length, => callback null, trees
@@ -24,10 +31,14 @@ class MongoDB
           _.extend trees, (o={})[collection.s.name.split().pop()] = tree
           done()
   listCollections:(callback)->
+    throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
     @db.collections (e,cols)=>
       callback.apply @, if e? then [e] else [null, _.map _.pluck( cols, 's'), (v)-> v.name]
   deriveSchema:(collection, callback)->
-    throw 'callback required as argument[1]' unless callback? and typeof callback is 'function' 
+    throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
+    return callback 'collection is required' unless collection
+    unless (t = typeof collection).match /^(string|object)$/
+      return callback "collection is expected to be type String or Object. Type was #{t}" 
     types = {}
     tree = {}
     compare = (a, b)->
@@ -39,9 +50,7 @@ class MongoDB
       col.find {}, {}, (e,res)=>
         return callback? e if e?
         res.toArray (e,arr)=>
-          console.log arr.length
           for record in arr
-            console.log record
             branch = (new Serializable record).serialize()
             for key,value of branch
               types[key] ?= {}
@@ -62,6 +71,7 @@ class MongoDB
     # returns error if unable to handle collection param
     callback 'collection parameter was invalid'
   createCollection: (name, json, opts, callback)->
+    throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
     if typeof opts is 'function'
       callback = arguments[2]
       opts = idInjection: true
@@ -72,6 +82,7 @@ class MongoDB
       return callback e
     @createCollection name, callback
 exports.initialize = (dataSource, callback)=>
+  throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
   MongoConnector.initialize dataSource, (e,db)=>
     return callback.apply @, arguments if e?
     _.extend dataSource, ApiHero: new MongoDB dataSource, db
