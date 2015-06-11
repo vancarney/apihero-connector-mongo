@@ -7,7 +7,10 @@ class MongoDB
   exclude:['_+.*', 'system\.indexes+', 'migrations+']
   constructor:(@dataSource, @db)->
   getCollection:(name,callback)->
-    @db.collections.apply @, arguments
+    @db.collection name, callback
+  dropCollection:(name,callback)->
+    @getCollection name, (e,col)=>
+      col.drop callback
   discoverCollections:(callback)->
     trees = {}
     @db.collections (e,cols)=>
@@ -28,13 +31,14 @@ class MongoDB
       return 1 if (a[1] < b[1] )
       return -1 if (a[1] > b[1])
       0
-    
     handler = (e,col) =>
       return callback? e, null if e?
       col.find {}, {}, (e,res)=>
         return callback? e if e?
         res.toArray (e,arr)=>
+          console.log arr.length
           for record in arr
+            console.log record
             branch = (new Serializable record).serialize()
             for key,value of branch
               types[key] ?= {}
@@ -47,6 +51,7 @@ class MongoDB
             else
               type = tPair[0][0]
             tree[field] = type
+          console.log tree
           return callback? null, tree
     #handles colletion name as param 1 
     return @getCollection( collection, handler ) if typeof collection is 'string'
@@ -57,13 +62,13 @@ class MongoDB
   createCollection: (name, json, opts, callback)->
     if typeof opts is 'function'
       callback = arguments[2]
-      opts = null
-    @dataSource.createCollection.apply @, arguments
-  buildCollection: (name, json, opts, callback)->
-    if typeof opts is 'function'
-      callback = arguments[2]
-      opts = null
-    @dataSource.buildCollection.apply @, arguments
+      opts = idInjection: true
+    return @db.createCollection name, arguments[1] if arguments.length is 2
+    try
+      @dataSource.buildModelFromInstance.apply @dataSource, _.initial arguments
+    catch e
+      return callback e
+    @createCollection name, callback
 exports.initialize = (dataSource, callback)=>
   MongoConnector.initialize dataSource, (e,db)=>
     return callback.apply @, arguments if e?
