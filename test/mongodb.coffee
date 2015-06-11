@@ -15,11 +15,11 @@ describe 'mongodb connector', ->
     expect( @ds.ApiHero ).to.exist
     
   it 'should create a Collections', (done)=>
-    @ds.ApiHero.createCollection 'DeleteMe', done
+    @ds.ApiHero.createCollection 'RenameMe', done
 
   it 'should get a Collections', (done)=>
-    @ds.ApiHero.getCollection 'DeleteMe', (e,col)=>
-      col.s.name.should.eq 'DeleteMe'
+    @ds.ApiHero.getCollection 'RenameMe', (e,col)=>
+      col.s.name.should.eq 'RenameMe'
       done.apply @, arguments
 
   it 'should obtain a list of Collections', (done)=>
@@ -28,7 +28,7 @@ describe 'mongodb connector', ->
     @ds.ApiHero.listCollections (e,names)=>
       throw e if e?
       names.length.should.eq 2
-      expect( names.indexOf 'DeleteMe' ).to.be.above -1
+      expect( names.indexOf 'RenameMe' ).to.be.above -1
       done.apply @, arguments
 
   it 'should filter the list of Collections', (done)=>
@@ -38,6 +38,12 @@ describe 'mongodb connector', ->
       expect( filtered.indexOf 'system.indexes').to.eq -1
       done()
       
+  it 'should rename a collection', (done)=>
+    @ds.ApiHero.renameCollection 'RenameMe', 'DeleteMe', =>
+      @ds.ApiHero.getCollection  'DeleteMe', (e, col)=>
+        expect( col ).to.exist
+        done.apply @, arguments
+              
   it 'should drop a collection', (done)=>
     @ds.ApiHero.dropCollection 'DeleteMe', =>
       @ds.ApiHero.listCollections (e,names)=>

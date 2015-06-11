@@ -8,6 +8,9 @@ class MongoDB
   constructor:(@dataSource, @db)->
   getCollection:(name,callback)->
     @db.collection name, callback
+  renameCollection:(name, newName, opts,callback)->
+    @getCollection name, (e,col)=>
+      col.rename newName, opts, callback    
   dropCollection:(name,callback)->
     @getCollection name, (e,col)=>
       col.drop callback
@@ -51,7 +54,6 @@ class MongoDB
             else
               type = tPair[0][0]
             tree[field] = type
-          console.log tree
           return callback? null, tree
     #handles colletion name as param 1 
     return @getCollection( collection, handler ) if typeof collection is 'string'
