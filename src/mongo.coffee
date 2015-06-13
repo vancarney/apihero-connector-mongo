@@ -72,9 +72,8 @@ class MongoDB
     callback 'collection parameter was invalid'
   createCollection: (name, json, opts, callback)->
     throw 'callback required' unless arguments.length and typeof arguments[arguments.length - 1] is 'function'
-    if typeof opts is 'function'
-      callback = arguments[2]
-      opts = idInjection: true
+    opts = idInjection: true if typeof opts is 'function'
+    callback ?= arguments[arguments.length - 1]
     return @db.createCollection name, arguments[1] if arguments.length is 2
     try
       @dataSource.buildModelFromInstance.apply @dataSource, _.initial arguments
